@@ -1,25 +1,20 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/client"
+	"github.com/PrajvalBadiger/docker-ui/internal/docker"
 )
 
 func main() {
-	apiClient, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		panic(err)
-	}
-	defer apiClient.Close()
+	var dw docker.DockerWrapper
 
-	images, err := apiClient.ImageList(context.Background(), image.ListOptions{All: true})
+	dw.NewClient()
+	defer dw.CloseClient()
 
-	_, inspectJson, err := apiClient.ImageInspectWithRaw(context.Background(), images[0].ID)
-	if err != nil {
-		panic(err)
+	dockerImages := dw.GetImages()
+
+	for _, img := range dockerImages {
+		fmt.Println(img.Tag, img.ID, img.Created)
 	}
-	fmt.Printf("%s", inspectJson)
 }
