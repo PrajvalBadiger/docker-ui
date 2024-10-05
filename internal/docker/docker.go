@@ -2,6 +2,8 @@ package docker
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
@@ -9,7 +11,9 @@ import (
 
 type DockerImage struct {
 	ID      string
+	Repo    string
 	Tag     string
+	Size    int64
 	Created int64
 }
 
@@ -42,14 +46,19 @@ func (c *DockerWrapper) GetImages() []DockerImage {
 		if len(img.RepoTags) == 0 {
 			dockerImages = append(dockerImages, DockerImage{
 				ID:      img.ID,
-				Tag:     "<none>:<none>",
+				Repo:    "<none>",
+				Tag:     "<none>",
+				Size:    img.Size,
 				Created: img.Created,
 			})
 		} else {
 			for _, tag := range img.RepoTags {
+				repo := strings.Split(tag, ":")
 				dockerImages = append(dockerImages, DockerImage{
 					ID:      img.ID,
-					Tag:     tag,
+					Repo:    repo[0],
+					Tag:     repo[1],
+					Size:    img.Size,
 					Created: img.Created,
 				})
 			}
@@ -57,4 +66,13 @@ func (c *DockerWrapper) GetImages() []DockerImage {
 	}
 
 	return dockerImages
+}
+
+func (dw *DockerWrapper) ListImages() {
+	dockerImages := dw.GetImages()
+
+	fmt.Println("REPOSITORY                        TAG                IMAGE ID       CREATED         SIZE")
+	for _, img := range dockerImages {
+		fmt.Println(img.Repo, img.Tag, shortID(img.ID), timeAgo(img.Created), humanReadableSize(img.Size))
+	}
 }
