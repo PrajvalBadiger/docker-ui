@@ -12,7 +12,8 @@ pipeline {
         stage('Build') {
             steps {
                 sh 'pwd'
-                sh 'make build'
+                sh 'go mod tidy'
+                sh 'go build -o bin/docker-ui main.go'
             }
         }
         stage('Test') {
