@@ -7,6 +7,7 @@ pipeline {
     }
     environment {
         GO114MODULE ='on'
+        GOCACHE="${WORKSPACE}"
     }
     stages {
         stage('Build') {
