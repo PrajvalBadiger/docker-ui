@@ -5,6 +5,9 @@ pipeline {
             image 'golang:1.22-alpine'
         }
     }
+    parameters {
+        string defaultValue: 'main', description: 'specify which branch to use.', name: 'BRANCH', trim: true
+    }
     environment {
         GO114MODULE ='on'
         GOCACHE="${WORKSPACE}"
