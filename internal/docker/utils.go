@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func humanReadableSize(bytes int64) string {
+func HumanReadableSize(bytes int64) string {
 	const (
 		KB = 1000
 		MB = 1000 * KB
@@ -25,7 +25,7 @@ func humanReadableSize(bytes int64) string {
 	}
 }
 
-func timeAgo(unixTime int64) string {
+func TimeAgo(unixTime int64) string {
 	now := time.Now()
 	t := time.Unix(unixTime, 0)
 	diff := now.Sub(t)
@@ -48,6 +48,6 @@ func timeAgo(unixTime int64) string {
 	}
 }
 
-func shortID(id string) string {
+func ShortID(id string) string {
 	return strings.Split(id, ":")[1][:12]
 }

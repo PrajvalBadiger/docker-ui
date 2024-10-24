@@ -2,7 +2,6 @@ package docker
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/docker/docker/api/types/image"
@@ -68,11 +67,13 @@ func (c *DockerWrapper) GetImages() []DockerImage {
 	return dockerImages
 }
 
-func (dw *DockerWrapper) ListImages() {
+func (dw *DockerWrapper) ListImages() []string {
 	dockerImages := dw.GetImages()
 
-	fmt.Println("REPOSITORY                        TAG                IMAGE ID       CREATED         SIZE")
+	s := make([]string, 0)
 	for _, img := range dockerImages {
-		fmt.Println(img.Repo, img.Tag, shortID(img.ID), timeAgo(img.Created), humanReadableSize(img.Size))
+		i := img.Repo + ":" + img.Tag
+		s = append(s, i)
 	}
+	return s
 }

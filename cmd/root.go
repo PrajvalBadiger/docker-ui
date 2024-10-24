@@ -6,7 +6,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/PrajvalBadiger/docker-ui/internal/docker"
+	"github.com/PrajvalBadiger/docker-ui/internal/bubbletea"
 	"github.com/spf13/cobra"
 )
 
@@ -49,11 +49,5 @@ func init() {
 }
 
 func start() {
-	var dw docker.DockerWrapper
-
-	dw.NewClient()
-	defer dw.CloseClient()
-
-	dw.ListImages()
-
+	bubbletea.Start()
 }

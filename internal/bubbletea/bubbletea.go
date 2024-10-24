@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/PrajvalBadiger/docker-ui/internal/docker"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,7 +16,7 @@ var (
 
 	titleStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FFFDF5")).
-			Background(lipgloss.Color("#25A065")).
+			Background(lipgloss.Color("#2F99EE")).
 			Padding(0, 1)
 
 	statusMessageStyle = lipgloss.NewStyle().
@@ -71,32 +72,37 @@ func newListKeyMap() *listKeyMap {
 }
 
 type model struct {
-	list          list.Model
-	itemGenerator *randomItemGenerator
-	keys          *listKeyMap
-	delegateKeys  *delegateKeyMap
+	list         list.Model
+	keys         *listKeyMap
+	delegateKeys *delegateKeyMap
 }
 
 func newModel() model {
 	var (
-		itemGenerator randomItemGenerator
-		delegateKeys  = newDelegateKeyMap()
-		listKeys      = newListKeyMap()
+		delegateKeys = newDelegateKeyMap()
+		listKeys     = newListKeyMap()
 	)
 
 	// Make initial list of items
-	const numItems = 24
-	items := make([]list.Item, numItems)
+	dImages := dw.GetImages()
+	numItems := len(dImages)
+	items := make([]list.Item, len(dImages))
 	for i := 0; i < numItems; i++ {
-		items[i] = itemGenerator.next()
+		sTitle := fmt.Sprintf("   %s:%s (%s) ", dImages[i].Repo, dImages[i].Tag, docker.ShortID(dImages[i].ID))
+
+		sDescription := fmt.Sprintf(" Size: %s ", docker.HumanReadableSize(dImages[i].Size))
+		items[i] = item{
+			title:       sTitle,
+			description: sDescription,
+		}
 	}
 
 	// Setup list
 	delegate := newItemDelegate(delegateKeys)
-	groceryList := list.New(items, delegate, 0, 0)
-	groceryList.Title = "Groceries"
-	groceryList.Styles.Title = titleStyle
-	groceryList.AdditionalFullHelpKeys = func() []key.Binding {
+	dockerImagesList := list.New(items, delegate, 0, 0)
+	dockerImagesList.Title = "Docker Images"
+	dockerImagesList.Styles.Title = titleStyle
+	dockerImagesList.AdditionalFullHelpKeys = func() []key.Binding {
 		return []key.Binding{
 			listKeys.toggleSpinner,
 			listKeys.insertItem,
@@ -108,10 +114,9 @@ func newModel() model {
 	}
 
 	return model{
-		list:          groceryList,
-		keys:          listKeys,
-		delegateKeys:  delegateKeys,
-		itemGenerator: &itemGenerator,
+		list:         dockerImagesList,
+		keys:         listKeys,
+		delegateKeys: delegateKeys,
 	}
 }
 
@@ -157,12 +162,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.list.SetShowHelp(!m.list.ShowHelp())
 			return m, nil
 
-		case key.Matches(msg, m.keys.insertItem):
-			m.delegateKeys.remove.SetEnabled(true)
-			newItem := m.itemGenerator.next()
-			insCmd := m.list.InsertItem(0, newItem)
-			statusCmd := m.list.NewStatusMessage(statusMessageStyle("Added " + newItem.Title()))
-			return m, tea.Batch(insCmd, statusCmd)
 		}
 	}
 
@@ -178,7 +177,13 @@ func (m model) View() string {
 	return appStyle.Render(m.list.View())
 }
 
+var dw docker.DockerWrapper
+
 func Start() {
+
+	dw.NewClient()
+	defer dw.CloseClient()
+
 	if _, err := tea.NewProgram(newModel(), tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
